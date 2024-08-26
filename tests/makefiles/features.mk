@@ -1,0 +1,2 @@
+output:
+	@echo $(.FEATURES)
