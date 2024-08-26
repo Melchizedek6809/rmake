@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use std::io;
-use std::process::{Command, Stdio };
+use std::process::{Command, Stdio};
 
 #[derive(Clone, Debug, Default)]
 pub struct MakeRule {
@@ -28,10 +28,9 @@ impl MakeRule {
             if !output.status.success() {
                 return match output.status.code() {
                     Some(_c) => Err(io::Error::new(io::ErrorKind::Other, "Non zero exit code")),
-                    None => Err(io::Error::new(io::ErrorKind::Other, "Signal"))
-                }
+                    None => Err(io::Error::new(io::ErrorKind::Other, "Signal")),
+                };
             }
-            
         }
         return Ok(());
     }
@@ -48,11 +47,19 @@ impl MakeRule {
             if !output.status.success() {
                 return match output.status.code() {
                     Some(_c) => Err(io::Error::new(io::ErrorKind::Other, "Non zero exit code")),
-                    None => Err(io::Error::new(io::ErrorKind::Other, "Signal"))
-                }
+                    None => Err(io::Error::new(io::ErrorKind::Other, "Signal")),
+                };
             }
-            ret.push(std::str::from_utf8(output.stdout.as_slice()).unwrap().to_owned());
-            ret.push(std::str::from_utf8(output.stderr.as_slice()).unwrap().to_owned());
+            ret.push(
+                std::str::from_utf8(output.stdout.as_slice())
+                    .unwrap()
+                    .to_owned(),
+            );
+            ret.push(
+                std::str::from_utf8(output.stderr.as_slice())
+                    .unwrap()
+                    .to_owned(),
+            );
         }
         Ok(ret)
     }

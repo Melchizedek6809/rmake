@@ -48,7 +48,7 @@ impl MakeGraph {
                     continue;
                 }
             } else {
-                let parts:Vec<&str> = line.split(":").collect();
+                let parts: Vec<&str> = line.split(":").collect();
                 if parts.len() != 2 {
                     println!("Invalid line: {}", line);
                     continue;
@@ -90,7 +90,9 @@ impl MakeGraph {
 }
 
 fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where P: AsRef<Path>, {
+where
+    P: AsRef<Path>,
+{
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
 }
