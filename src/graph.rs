@@ -8,6 +8,7 @@ use crate::MakeRule;
 #[derive(Clone, Debug, Default)]
 pub struct MakeGraph {
     default_target: String,
+    pub mock: bool,
     rules: HashMap<String, MakeRule>,
 }
 
@@ -15,24 +16,27 @@ impl MakeGraph {
     pub fn new() -> Self {
         MakeGraph {
             default_target: String::new(),
+            mock: false,
             rules: HashMap::new(),
         }
+    }
+
+    pub fn set_mock(mut self, m: bool) -> Self {
+        self.mock = m;
+        self
+    }
+
+    pub fn from_file(path: &str) -> Result<Self, std::io::Error> {
+        MakeGraph::new().load(path)
     }
 
     pub fn add_rule(&mut self, result: String, rule: MakeRule) {
         self.rules.insert(result, rule);
     }
 
-    pub fn new_run(path: &str) -> Result<(), std::io::Error> {
-        let g = MakeGraph::new();
-        let g = g.load(path)?;
+    pub fn new_run(path: &str) -> Result<String, std::io::Error> {
+        let g = MakeGraph::from_file(path)?;
         g.run(&g.default_target)
-    }
-
-    pub fn new_mock_run(path: &str) -> Result<String, std::io::Error> {
-        let g = MakeGraph::new();
-        let g = g.load(path)?;
-        g.mock_run(&g.default_target)
     }
 
     pub fn load(mut self, path: &str) -> Result<Self, std::io::Error> {
@@ -71,18 +75,9 @@ impl MakeGraph {
         Ok(self)
     }
 
-    pub fn run(&self, target: &str) -> Result<(), std::io::Error> {
+    pub fn run(&self, target: &str) -> Result<String, std::io::Error> {
         if let Some(rule) = self.rules.get(target) {
-            rule.run()
-        } else {
-            Err(io::Error::new(io::ErrorKind::Other, "No rule found"))
-        }
-    }
-
-    pub fn mock_run(&self, target: &str) -> Result<String, std::io::Error> {
-        if let Some(rule) = self.rules.get(target) {
-            let res = rule.run_mock()?;
-            Ok(res.join(""))
+            rule.run(self)
         } else {
             Err(io::Error::new(io::ErrorKind::Other, "No rule found"))
         }
