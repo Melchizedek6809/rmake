@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::MakeRule;
 
 #[derive(Clone, Debug, Default)]
 pub struct MakeGraph {
-    default_target: String,
-    pub mock: bool,
+    pub default_target: String,
+    pub dry: bool,
     rules: HashMap<String, MakeRule>,
 }
 
@@ -16,17 +16,17 @@ impl MakeGraph {
     pub fn new() -> Self {
         MakeGraph {
             default_target: String::new(),
-            mock: false,
+            dry: false,
             rules: HashMap::new(),
         }
     }
 
-    pub fn set_mock(mut self, m: bool) -> Self {
-        self.mock = m;
+    pub fn set_dry(mut self, m: bool) -> Self {
+        self.dry = m;
         self
     }
 
-    pub fn from_file(path: &str) -> Result<Self, std::io::Error> {
+    pub fn from_file(path: &PathBuf) -> Result<Self, std::io::Error> {
         MakeGraph::new().load(path)
     }
 
@@ -34,12 +34,12 @@ impl MakeGraph {
         self.rules.insert(result, rule);
     }
 
-    pub fn new_run(path: &str) -> Result<String, std::io::Error> {
+    pub fn new_run(path: &PathBuf) -> Result<String, std::io::Error> {
         let g = MakeGraph::from_file(path)?;
         g.run(&g.default_target)
     }
 
-    pub fn load(mut self, path: &str) -> Result<Self, std::io::Error> {
+    pub fn load(mut self, path: &PathBuf) -> Result<Self, std::io::Error> {
         let lines = read_lines(path)?;
         let mut last_target = String::new();
         for line in lines.flatten() {
