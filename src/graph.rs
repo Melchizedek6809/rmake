@@ -53,22 +53,31 @@ impl MakeGraph {
                 }
             } else {
                 let parts: Vec<&str> = line.split(":").collect();
-                if parts.len() != 2 {
-                    println!("Invalid line: {}", line);
-                    continue;
-                }
-                let target = parts[0].trim();
-                if !target.is_empty() {
-                    self.default_target = target.to_string();
-                    last_target = target.to_string();
-                }
-                if let Some(rule) = self.rules.get_mut(&last_target) {
-                    rule.add_dependency(parts[1].trim().to_owned());
-                    continue;
+                if parts.len() == 2 {
+                    let target = parts[0].trim();
+                    if !target.is_empty() {
+                        self.default_target = target.to_string();
+                        last_target = target.to_string();
+                    }
+                    if let Some(rule) = self.rules.get_mut(&last_target) {
+                        rule.add_dependency(parts[1].trim().to_owned());
+                        continue;
+                    } else {
+                        let mut rule = MakeRule::new();
+                        rule.add_dependency(parts[1].trim().to_owned());
+                        self.add_rule(target.to_string(), rule);
+                    }
                 } else {
-                    let mut rule = MakeRule::new();
-                    rule.add_dependency(parts[1].trim().to_owned());
-                    self.add_rule(target.to_string(), rule);
+                    let parts: Vec<&str> = line.split("=").collect();
+                    if parts.len() >= 2 {
+                        continue;
+                    } else {
+                        if line.trim().len() == 0 {
+                            continue;
+                        }
+                        println!("Invalid line: {}", line);
+                        continue;
+                    }
                 }
             }
         }
