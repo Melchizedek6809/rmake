@@ -56,7 +56,9 @@ impl MakeGraph {
                 if parts.len() == 2 {
                     let target = parts[0].trim();
                     if !target.is_empty() {
-                        self.default_target = target.to_string();
+                        if self.default_target.is_empty() && !target.starts_with(".") {
+                            self.default_target = target.to_string();
+                        }
                         last_target = target.to_string();
                     }
                     if let Some(rule) = self.rules.get_mut(&last_target) {
