@@ -44,6 +44,8 @@ impl MakeParser {
     fn parse_line(&mut self, graph: &mut MakeGraph, line: &str) -> Result<(), io::Error> {
         if line.starts_with("\t") {
             self.parse_recipe(graph, line)
+        } else if line.starts_with("#") {
+            Ok(()) // Comment
         } else {
             let parts: Vec<&str> = line.split(":").collect();
             if parts.len() == 2 {

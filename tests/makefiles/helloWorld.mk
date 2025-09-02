@@ -1,5 +1,7 @@
+#none:
+
 hello:
 	echo "Hello, World!"
 
-ferris:
+ferris: hello
 	@echo "Hello, Ferris!"

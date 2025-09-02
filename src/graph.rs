@@ -23,6 +23,10 @@ impl MakeGraph {
         self
     }
 
+    pub fn get_rule(&self, target: &str) -> Option<&MakeRule> {
+        self.rules.get(target)
+    }
+
     pub fn get_rule_mut(&mut self, target: &str) -> Option<&mut MakeRule> {
         self.rules.get_mut(target)
     }
