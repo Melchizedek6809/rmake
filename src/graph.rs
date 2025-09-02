@@ -31,7 +31,9 @@ impl MakeGraph {
         self.rules.insert(result, rule);
     }
 
-    pub fn run(&self, target: &str) -> Result<String, std::io::Error> {
+    pub fn run(&self, target: Option<&str>) -> Result<String, std::io::Error> {
+        let target = target.unwrap_or(&self.default_target);
+
         if let Some(rule) = self.rules.get(target) {
             rule.run(self)
         } else {

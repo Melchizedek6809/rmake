@@ -44,8 +44,7 @@ fn main() {
 
     if let Some(makefile) = get_makefile(&cli) {
         let graph = MakeParser::parse(MakeGraph::new(), &makefile).unwrap();
-        let target = cli.target.unwrap_or_else(|| graph.default_target.clone());
-        graph.run(&target).unwrap();
+        graph.run(cli.target.as_deref()).unwrap();
     } else {
         eprintln!("rmake: *** No targets specified and no makefile found.  Stop.");
     }

@@ -5,17 +5,16 @@ use rmake::MakeParser;
 #[test]
 fn hello_world() {
     let makefile = PathBuf::from("tests/makefiles/helloWorld.mk");
+
+    let graph = MakeParser::from_file(&makefile).unwrap();
+
     assert_eq!(
-        MakeParser::new_run(&makefile).unwrap(),
+        graph.run(None).unwrap(),
         "echo \"Hello, World!\"\nHello, World!\n"
     );
-}
 
-#[test]
-fn silent_hello() {
-    let makefile = PathBuf::from("tests/makefiles/silentHello.mk");
     assert_eq!(
-        MakeParser::new_run(&makefile).unwrap(),
-        "Hello, World!\n"
+        graph.run(Some("ferris")).unwrap(),
+        "Hello, Ferris!\n"
     );
 }

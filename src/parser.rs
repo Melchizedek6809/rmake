@@ -19,9 +19,8 @@ impl MakeParser {
         Ok(Self::parse(MakeGraph::new(), path)?)
     }
 
-    pub fn new_run(path: &PathBuf) -> Result<String, std::io::Error> {
-        let g = Self::from_file(path)?;
-        g.run(&g.default_target)
+    pub fn new_run(path: &PathBuf, target: Option<&str>) -> Result<String, std::io::Error> {
+        Self::from_file(path)?.run(target)
     }
 
     fn parse_recipe(&mut self, graph: &mut MakeGraph, line: &str) -> Result<(), io::Error> {
