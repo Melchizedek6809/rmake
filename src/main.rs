@@ -1,5 +1,6 @@
 use clap::Parser;
 pub use rmake::MakeGraph;
+use rmake::MakeParser;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -42,8 +43,7 @@ fn main() {
     let cli = Cli::parse();
 
     if let Some(makefile) = get_makefile(&cli) {
-        let graph = MakeGraph::new();
-        let graph = graph.load(&makefile).unwrap();
+        let graph = MakeParser::parse(MakeGraph::new(), &makefile).unwrap();
         let target = cli.target.unwrap_or_else(|| graph.default_target.clone());
         graph.run(&target).unwrap();
     } else {
