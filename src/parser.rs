@@ -1,14 +1,20 @@
 use std::fs::File;
-use std::path::{Path, PathBuf};
 use std::io::{self, BufRead};
+use std::path::{Path, PathBuf};
 
-use crate::{MakeGraph, MakeRule};
+use crate::{MakeGraph, MakeRecipeStep, MakeRule};
 
 pub struct MakeParser {
-
+    last_target: String,
 }
 
 impl MakeParser {
+    fn new() -> Self {
+        MakeParser {
+            last_target: "".to_string(),
+        }
+    }
+
     pub fn from_file(path: &PathBuf) -> Result<MakeGraph, std::io::Error> {
         Ok(Self::parse(MakeGraph::new(), path)?)
     }
@@ -18,50 +24,66 @@ impl MakeParser {
         g.run(&g.default_target)
     }
 
-    pub fn parse(mut graph: MakeGraph, path: &PathBuf) -> Result<MakeGraph, io::Error> {
-        let lines = read_lines(path)?;
-
-        let mut last_target = String::new();
-        for line in lines.flatten() {
-            if line.starts_with("\t") {
-                if let Some(rule) = graph.get_rule_mut(&last_target) {
-                    rule.add_recipe(line.trim().to_owned());
-                    continue;
-                } else {
-                    println!("Invalid line: {}", line);
-                    continue;
-                }
+    fn parse_recipe(&mut self, graph: &mut MakeGraph, line: &str) -> Result<(), io::Error> {
+        if let Some(rule) = graph.get_rule_mut(&self.last_target) {
+            let line = line.trim();
+            if line.starts_with("@") {
+                let line = &line[1..];
+                let step = MakeRecipeStep::Silent(String::from(line));
+                rule.add_recipe(step);
             } else {
-                let parts: Vec<&str> = line.split(":").collect();
-                if parts.len() == 2 {
-                    let target = parts[0].trim();
-                    if !target.is_empty() {
-                        if graph.default_target.is_empty() && !target.starts_with(".") {
-                            graph.default_target = target.to_string();
-                        }
-                        last_target = target.to_string();
+                let line = String::from(line);
+                let step = MakeRecipeStep::Normal(String::from(line));
+                rule.add_recipe(step);
+            }
+        } else {
+            println!("Invalid line: {}", line);
+        }
+        Ok(())
+    }
+
+    fn parse_line(&mut self, graph: &mut MakeGraph, line: &str) -> Result<(), io::Error> {
+        if line.starts_with("\t") {
+            self.parse_recipe(graph, line)
+        } else {
+            let parts: Vec<&str> = line.split(":").collect();
+            if parts.len() == 2 {
+                let target = parts[0].trim();
+                if !target.is_empty() {
+                    if graph.default_target.is_empty() && !target.starts_with(".") {
+                        graph.default_target = target.to_string();
                     }
-                    if let Some(rule) = graph.get_rule_mut(&last_target) {
-                        rule.add_dependency(parts[1].trim().to_owned());
-                        continue;
-                    } else {
-                        let mut rule = MakeRule::new();
-                        rule.add_dependency(parts[1].trim().to_owned());
-                        graph.add_rule(target.to_string(), rule);
-                    }
+                    self.last_target = target.to_string();
+                }
+
+                if let Some(rule) = graph.get_rule_mut(&self.last_target) {
+                    rule.add_dependency(parts[1].trim().to_owned());
                 } else {
-                    let parts: Vec<&str> = line.split("=").collect();
-                    if parts.len() >= 2 {
-                        continue;
-                    } else {
-                        if line.trim().len() == 0 {
-                            continue;
-                        }
+                    let mut rule = MakeRule::new();
+                    rule.add_dependency(parts[1].trim().to_owned());
+                    graph.add_rule(target.to_string(), rule);
+                }
+                Ok(())
+            } else {
+                let parts: Vec<&str> = line.split("=").collect();
+                if parts.len() >= 2 {
+                    Ok(())
+                } else {
+                    if line.trim().len() > 0 {
                         println!("Invalid line: {}", line);
-                        continue;
                     }
+                    Ok(())
                 }
             }
+        }
+    }
+
+    pub fn parse(mut graph: MakeGraph, path: &PathBuf) -> Result<MakeGraph, io::Error> {
+        let mut parser = MakeParser::new();
+        let lines = read_lines(path)?;
+
+        for line in lines.flatten() {
+            parser.parse_line(&mut graph, &line)?;
         }
 
         Ok(graph)

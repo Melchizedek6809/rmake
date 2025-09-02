@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::io;
 
-use crate::{MakeGraph, MakeRecipe};
+use crate::{MakeGraph, MakeRecipe, MakeRecipeStep};
 
 #[derive(Clone, Debug, Default)]
 pub struct MakeRule {
@@ -28,7 +28,7 @@ impl MakeRule {
         self.dependencies.insert(dependency);
     }
 
-    pub fn add_recipe(&mut self, recipe: String) {
+    pub fn add_recipe(&mut self, recipe: MakeRecipeStep) {
         self.recipe.push(recipe);
     }
 }

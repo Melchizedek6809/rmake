@@ -1,6 +1,6 @@
+use crate::MakeRule;
 use std::collections::HashMap;
 use std::io::{self};
-use crate::MakeRule;
 
 #[derive(Clone, Debug, Default)]
 pub struct MakeGraph {
