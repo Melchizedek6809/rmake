@@ -15,5 +15,5 @@ fn hello_world() {
         graph.run(None).unwrap(),
         "echo \"Hello, World!\"\nHello, World!\n"
     );
-    assert_eq!(graph.run(Some("ferris")).unwrap(), "Hello, Ferris!\n");
+    assert_eq!(graph.run(Some("ferris")).unwrap(), "echo \"Hello, World!\"\nHello, World!\nHello, Ferris!\n");
 }

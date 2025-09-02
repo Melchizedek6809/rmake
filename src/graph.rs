@@ -39,7 +39,21 @@ impl MakeGraph {
         let target = target.unwrap_or(&self.default_target);
 
         if let Some(rule) = self.rules.get(target) {
-            rule.run(self)
+            let mut ret = vec![];
+
+            for dep in &rule.dependencies {
+                match self.run(Some(dep)) {
+                    Ok(s)  => { ret.push(s) }
+                    Err(err) => { return Err(err) }
+                };
+            }
+
+            match rule.run(self) {
+                Ok(s)  => { ret.push(s) }
+                Err(err) => { return Err(err) }
+            };
+
+            Ok(ret.join(""))
         } else {
             Err(io::Error::other("No rule found"))
         }
