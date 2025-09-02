@@ -21,15 +21,15 @@ impl MakeRecipeStep {
         match self {
             MakeRecipeStep::Normal(cmd) | MakeRecipeStep::Silent(cmd) => {
                 let output = Command::new("sh")
-                    .args(["-c", &cmd])
+                    .args(["-c", cmd])
                     .output()
                     .expect("Failed to execute command");
 
                 if !output.status.success() {
-                    return match output.status.code() {
-                        Some(_c) => Err(io::Error::new(io::ErrorKind::Other, "Non zero exit code")),
-                        None => Err(io::Error::new(io::ErrorKind::Other, "Signal")),
-                    };
+                    match output.status.code() {
+                        Some(_c) => Err(io::Error::other("Non zero exit code")),
+                        None => Err(io::Error::other("Signal")),
+                    }
                 } else {
                     let stdout = std::str::from_utf8(output.stdout.as_slice())
                         .unwrap()

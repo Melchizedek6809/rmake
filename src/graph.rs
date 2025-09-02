@@ -41,7 +41,7 @@ impl MakeGraph {
         if let Some(rule) = self.rules.get(target) {
             rule.run(self)
         } else {
-            Err(io::Error::new(io::ErrorKind::Other, "No rule found"))
+            Err(io::Error::other("No rule found"))
         }
     }
 }

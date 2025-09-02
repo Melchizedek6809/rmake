@@ -1,5 +1,5 @@
 use clap::Parser;
-pub use rmake::MakeGraph;
+use rmake::MakeGraph;
 use rmake::MakeParser;
 use std::path::PathBuf;
 
@@ -21,21 +21,23 @@ struct Cli {
 fn get_makefile(cli: &Cli) -> Option<PathBuf> {
     if let Some(file) = &cli.file {
         if file.exists() {
-            return Some(file.clone());
+            Some(file.clone())
         } else {
             eprintln!("{}: No such file or directory", file.to_str().unwrap());
-            return None;
+            None
         }
     } else {
         let buf = PathBuf::from("GNUMakefile");
         if buf.exists() {
             return Some(buf);
         }
+
         let buf = PathBuf::from("Makefile");
         if buf.exists() {
-            return Some(buf);
+            Some(buf)
+        } else {
+            None
         }
-        return None;
     }
 }
 

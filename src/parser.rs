@@ -16,7 +16,7 @@ impl MakeParser {
     }
 
     pub fn from_file(path: &PathBuf) -> Result<MakeGraph, std::io::Error> {
-        Ok(Self::parse(MakeGraph::new(), path)?)
+        Self::parse(MakeGraph::new(), path)
     }
 
     pub fn new_run(path: &PathBuf, target: Option<&str>) -> Result<String, std::io::Error> {
@@ -26,12 +26,10 @@ impl MakeParser {
     fn parse_recipe(&mut self, graph: &mut MakeGraph, line: &str) -> Result<(), io::Error> {
         if let Some(rule) = graph.get_rule_mut(&self.last_target) {
             let line = line.trim();
-            if line.starts_with("@") {
-                let line = &line[1..];
+            if let Some(line) = line.strip_prefix("@") {
                 let step = MakeRecipeStep::Silent(String::from(line));
                 rule.add_recipe(step);
             } else {
-                let line = String::from(line);
                 let step = MakeRecipeStep::Normal(String::from(line));
                 rule.add_recipe(step);
             }
@@ -41,41 +39,45 @@ impl MakeParser {
         Ok(())
     }
 
+    fn parse_rule(&mut self, graph: &mut MakeGraph, line: &str) -> Result<(), io::Error> {
+        let parts: Vec<&str> = line.split(":").collect();
+        if parts.len() == 2 {
+            let target = parts[0].trim();
+            if !target.is_empty() {
+                if graph.default_target.is_empty() && !target.starts_with(".") {
+                    graph.default_target = target.to_string();
+                }
+                self.last_target = target.to_string();
+            }
+
+            if let Some(rule) = graph.get_rule_mut(&self.last_target) {
+                rule.add_dependency(parts[1].trim().to_owned());
+            } else {
+                let mut rule = MakeRule::new();
+                rule.add_dependency(parts[1].trim().to_owned());
+                graph.add_rule(target.to_string(), rule);
+            }
+            Ok(())
+        } else {
+            let parts: Vec<&str> = line.split("=").collect();
+            if parts.len() >= 2 {
+                Ok(())
+            } else {
+                if !line.trim().is_empty() {
+                    println!("Invalid line: {}", line);
+                }
+                Ok(())
+            }
+        }
+    }
+
     fn parse_line(&mut self, graph: &mut MakeGraph, line: &str) -> Result<(), io::Error> {
         if line.starts_with("\t") {
             self.parse_recipe(graph, line)
         } else if line.starts_with("#") {
             Ok(()) // Comment
         } else {
-            let parts: Vec<&str> = line.split(":").collect();
-            if parts.len() == 2 {
-                let target = parts[0].trim();
-                if !target.is_empty() {
-                    if graph.default_target.is_empty() && !target.starts_with(".") {
-                        graph.default_target = target.to_string();
-                    }
-                    self.last_target = target.to_string();
-                }
-
-                if let Some(rule) = graph.get_rule_mut(&self.last_target) {
-                    rule.add_dependency(parts[1].trim().to_owned());
-                } else {
-                    let mut rule = MakeRule::new();
-                    rule.add_dependency(parts[1].trim().to_owned());
-                    graph.add_rule(target.to_string(), rule);
-                }
-                Ok(())
-            } else {
-                let parts: Vec<&str> = line.split("=").collect();
-                if parts.len() >= 2 {
-                    Ok(())
-                } else {
-                    if line.trim().len() > 0 {
-                        println!("Invalid line: {}", line);
-                    }
-                    Ok(())
-                }
-            }
+            self.parse_rule(graph, line)
         }
     }
 
@@ -83,7 +85,7 @@ impl MakeParser {
         let mut parser = MakeParser::new();
         let lines = read_lines(path)?;
 
-        for line in lines.flatten() {
+        for line in lines.map_while(Result::ok) {
             parser.parse_line(&mut graph, &line)?;
         }
 
