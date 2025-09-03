@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::{Path, PathBuf};
 
-use crate::{MakeGraph, MakeRecipeStep, MakeRule};
+use crate::{MakeAtom, MakeGraph, MakeRecipeStep, MakeRule};
 
 pub struct MakeParser {
     last_target: String,
@@ -42,21 +42,37 @@ impl MakeParser {
     fn parse_rule(&mut self, graph: &mut MakeGraph, line: &str) -> Result<(), io::Error> {
         let parts: Vec<&str> = line.split(":").collect();
         if parts.len() == 2 {
-            let target = parts[0].trim();
-            if !target.is_empty() {
-                if graph.default_target.is_empty() && !target.starts_with(".") {
-                    graph.default_target = target.to_string();
+            let targets = parts[0].trim();
+            let targets = MakeAtom::new(targets);
+            let targets = targets.eval(graph);
+
+            let dependencies = parts[1].trim();
+            let dependencies = MakeAtom::new(dependencies);
+            let dependencies = dependencies.eval(graph);
+
+            for target in targets.split_ascii_whitespace() {
+                if !target.is_empty() {
+                    if graph.default_target.is_empty() && !target.starts_with(".") {
+                        graph.default_target = target.to_string();
+                    }
+                    self.last_target = target.to_string();
                 }
-                self.last_target = target.to_string();
+
+                if let None = graph.get_rule(target) {
+                    graph.add_rule(target.to_string(), MakeRule::new());
+                }
+
+                for dependency in dependencies.split_ascii_whitespace() {
+                    let dependency = dependency.to_owned();
+
+                    if let Some(rule) = graph.get_rule_mut(target) {
+                        rule.add_dependency(dependency);
+                    } else {
+                        panic!("Can't add rule!");
+                    }
+                }
             }
 
-            if let Some(rule) = graph.get_rule_mut(&self.last_target) {
-                rule.add_dependency(parts[1].trim().to_owned());
-            } else {
-                let mut rule = MakeRule::new();
-                rule.add_dependency(parts[1].trim().to_owned());
-                graph.add_rule(target.to_string(), rule);
-            }
             Ok(())
         } else {
             let parts: Vec<&str> = line.split("=").collect();
