@@ -27,10 +27,12 @@ impl MakeParser {
         if let Some(rule) = graph.get_rule_mut(&self.last_target) {
             let line = line.trim();
             if let Some(line) = line.strip_prefix("@") {
-                let step = MakeRecipeStep::Silent(String::from(line));
+                let atom = MakeAtom::new(line);
+                let step = MakeRecipeStep::Silent(atom);
                 rule.add_recipe(step);
             } else {
-                let step = MakeRecipeStep::Normal(String::from(line));
+                let atom = MakeAtom::new(line);
+                let step = MakeRecipeStep::Normal(atom);
                 rule.add_recipe(step);
             }
         } else {

@@ -1,27 +1,29 @@
 use std::io;
 use std::process::Command;
 
-use crate::MakeGraph;
+use crate::{MakeAtom, MakeGraph};
 
 #[derive(Clone, Debug)]
 pub enum MakeRecipeStep {
-    Normal(String),
-    Silent(String),
+    Normal(MakeAtom),
+    Silent(MakeAtom),
 }
 
 impl MakeRecipeStep {
-    pub fn run(&self, _graph: &MakeGraph) -> Result<Vec<String>, std::io::Error> {
+    pub fn run(&self, graph: &MakeGraph) -> Result<Vec<String>, std::io::Error> {
         let mut ret = vec![];
 
         if let MakeRecipeStep::Normal(cmd) = self {
+            let cmd = cmd.eval(graph);
             println!("{cmd}");
             ret.push(format!("{cmd}\n"));
         }
 
         match self {
             MakeRecipeStep::Normal(cmd) | MakeRecipeStep::Silent(cmd) => {
+                let cmd = cmd.eval(graph);
                 let output = Command::new("sh")
-                    .args(["-c", cmd])
+                    .args(["-c", &cmd])
                     .output()
                     .expect("Failed to execute command");
 
