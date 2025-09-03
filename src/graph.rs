@@ -43,14 +43,14 @@ impl MakeGraph {
 
             for dep in &rule.dependencies {
                 match self.run(Some(dep)) {
-                    Ok(s)  => { ret.push(s) }
-                    Err(err) => { return Err(err) }
+                    Ok(s) => ret.push(s),
+                    Err(err) => return Err(err),
                 };
             }
 
             match rule.run(self) {
-                Ok(s)  => { ret.push(s) }
-                Err(err) => { return Err(err) }
+                Ok(s) => ret.push(s),
+                Err(err) => return Err(err),
             };
 
             Ok(ret.join(""))
